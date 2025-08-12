@@ -1,0 +1,26 @@
+# --- Visual Studio /.NET ---
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.userprefs
+*.cache
+*.log
+
+# --- Node / Next.js ---
+client/node_modules/
+client/.next/
+client/out/
+client/.turbo/
+client/.vercclient
+client/.vercel/
+client/.env
+client/.env.local
+client/.env.*.local
+
+# OS/editor
+.DS_Store
+Thumbs.db
