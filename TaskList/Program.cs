@@ -1,3 +1,5 @@
+using TaskList.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -12,6 +14,8 @@ builder.Services.AddCors(opt =>
     .AllowAnyMethod()
     )
 );
+
+builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>(); //Register the in-memory task repository
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
