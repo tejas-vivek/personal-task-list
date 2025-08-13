@@ -3,6 +3,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+// To allow calls from Next.js frontend
+builder.Services.AddCors(opt =>
+    opt.AddPolicy("web", p => p
+    .WithOrigins("http://localhost:3000")
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    )
+);
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -18,7 +28,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("web");
+
 app.UseAuthorization();
+
+app.MapGet("/", () => Results.Redirect("http://localhost:3000"));
+
+app.MapFallback(()=> Results.Redirect("http://localhost:3000"));
 
 app.MapControllers();
 
