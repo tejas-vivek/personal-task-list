@@ -1,8 +1,6 @@
 'use client'
 
-import Image from "next/image";
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 // ---Types---
 export type TaskItem = {
@@ -39,6 +37,7 @@ function useTasks(){
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null> (null)
 
+  //To keep UI consistent with backend
   const refetch = useCallback(async() => {
     setLoading(true)
     setError(null)
@@ -58,6 +57,7 @@ function useTasks(){
     refetch()
   }, [refetch])
 
+  // POST to backend 
   const addTask = useCallback(
     async (dto: CreateTaskDto) => {
       const res = await fetch(ENDPOINTS.add(), {
@@ -69,6 +69,7 @@ function useTasks(){
         await refetch() // refetch after mutation
     }, [refetch])
 
+    // Modify the task to have a strikethrough
     const completeTask = useCallback(
     async (id: number) => {
     const res = await fetch(ENDPOINTS.complete(id), {method: 'PATCH'})
@@ -78,8 +79,6 @@ function useTasks(){
 
     return {tasks, loading, error, refetch, addTask, completeTask}
 }
-
-
 
 
 export default function Home() {
@@ -95,7 +94,7 @@ export default function Home() {
     if(!title.trim()) return 
     setSubmitting(true)
     try{
-      await addTask({title: title.trim(), description: description.trim() || undefined})
+      await addTask({title: title.trim(), description: description.trim() || undefined}) // calls addTask function in custom hook
       setTitle('')
       setDescription('')
     } catch(err) {
@@ -127,13 +126,14 @@ export default function Home() {
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-lg font-medium text-slate-800">Add a task</h2>
               <form onSubmit={onSubmit} className="space-y-3">
+                {/* Title input field */}
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="title">
                     Title
                   </label>
                   <input
                     id="title"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none ring-0 focus:border-slate-400"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none ring-0 focus:border-slate-400 text-slate-800"
                     placeholder="Add task"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
@@ -142,13 +142,14 @@ export default function Home() {
                   />
                 </div>
 
+                {/* Description input field */}
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="desc">
                     Description <span className="text-slate-400">(optional)</span>
                   </label>
                   <textarea 
                     id="desc"
-                    className="min-h-[84px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-slate-400"
+                    className="min-h-[84px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-slate-400 text-slate-800"
                     placeholder="task description"
                     value={description}
                     onChange={e=> setDescription(e.target.value)}
@@ -173,12 +174,14 @@ export default function Home() {
               <h2 className="text-lg font-medium text-slate-800">Your tasks</h2>
             </div>
 
+            {/* loading state*/}
             {loading && (
               <div className="flex items-center gap-2 text-slate-600">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400/70 border-t-transparent">Loading...</span>
+                <span className="h-4 w-4 rounded-full border-2 border-slate-400/70 border-t-transparent">Loading...</span>
               </div>
             )}
 
+            {/* show error */}
             {error && (
               <div role="alert" className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
@@ -203,6 +206,7 @@ export default function Home() {
                     </time>
                   </div>
 
+                  {/* Button to mark complete */}
                   <div className="shrink-0">
                     {!t.isComplete && (
                       <button
@@ -218,6 +222,8 @@ export default function Home() {
               ))}
             </ul>
 
+
+            {/* If no tasks exists */}
             {!loading && tasks.length === 0 && !error && (
               <p className="text-sm text-slate-600">No tasks yet. Add your first task from the form!</p>
             )}

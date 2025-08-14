@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// To allow calls from Next.js frontend
+// CORS to allow backend calls from Next.js frontend
 builder.Services.AddCors(opt =>
     opt.AddPolicy("web", p => p
     .WithOrigins("http://localhost:3000")
@@ -14,6 +14,10 @@ builder.Services.AddCors(opt =>
     .AllowAnyMethod()
     )
 );
+
+//Enable console logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>(); //Register the in-memory task repository
 
@@ -36,6 +40,7 @@ app.UseCors("web");
 
 app.UseAuthorization();
 
+// Redirecting to Next.js frontend
 app.MapGet("/", () => Results.Redirect("http://localhost:3000"));
 
 app.MapFallback(()=> Results.Redirect("http://localhost:3000"));

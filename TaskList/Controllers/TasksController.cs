@@ -4,6 +4,8 @@ using TaskList.Models;
 using TaskList.Services;
 
 namespace TaskList.Controllers
+
+    //API. Maps HTTP verbs to repository operations
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -18,7 +20,7 @@ namespace TaskList.Controllers
             _logger = logger;
         }
 
-        //Get all tasks
+        //Return all tasks
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TaskItem>>> GetAll()
         {
@@ -26,7 +28,7 @@ namespace TaskList.Controllers
             return Ok(items);
         }
 
-        // (Optional) GET by id
+        // Return task by id
         [HttpGet("{id:int}")]
         public async Task<ActionResult<TaskItem>> GetById(int id)
         {
@@ -65,7 +67,7 @@ namespace TaskList.Controllers
             {
                 _logger.LogWarning("Attempted to mark task not present as complete: {TaskId}", id);
             }
-                return ok ? NoContent() : NoContent();
+                return ok ? NoContent() : NotFound();
         }
     }
 }

@@ -4,11 +4,9 @@ namespace TaskList.Services
 {
     public sealed class InMemoryTaskRepository : ITaskRepository
     {
-        private readonly List<TaskItem> _items = new();
-
-        private int _nextId = 1;
-
-        private readonly object _lock = new();
+        private readonly List<TaskItem> _items = new(); //backing store
+        private int _nextId = 1; // auto increment id
+        private readonly object _lock = new(); // protects _items and _nextId
 
         public Task<List<TaskItem>> GetAllAsync()
         {
