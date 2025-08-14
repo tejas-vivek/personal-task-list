@@ -1,103 +1,229 @@
+'use client'
+
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useState, useEffect, useCallback } from "react";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+// ---Types---
+export type TaskItem = {
+  id: number
+  title: string
+  description?: string | null
+  isComplete: boolean
+  createdAt: string
+}
+
+export type CreateTaskDto = {
+  title: string
+  description?: string
+}
+
+//---API helpers---
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://localhost:44320'
+const ENDPOINTS = {
+  list: () => `${API_BASE}/api/tasks`,
+  add: () => `${API_BASE}/api/tasks`,
+  complete: (id: number) => `${API_BASE}/api/tasks/${id}/complete`,
+}
+
+// sorting incomplete tasks on top
+const sortTasks = (arr: TaskItem[]) => 
+[...arr].sort((a,b) => {
+  if(a.isComplete !== b.isComplete) return a.isComplete ? 1 : -1 //first show incomplete
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() // newest first
+})
+
+// ---custom hook---
+function useTasks(){
+  const [tasks, setTasks] = useState<TaskItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null> (null)
+
+  const refetch = useCallback(async() => {
+    setLoading(true)
+    setError(null)
+    try{
+      const res = await fetch(ENDPOINTS.list())
+      if(!res.ok) throw new Error(`GET /api/tasks failed ($(res.status))`)
+      const data: TaskItem[] = await res.json()
+      setTasks(sortTasks(data))
+    } catch (err: any){
+      setError(err?.message ?? 'Failed to load tasks')
+    } finally {
+      setLoading(false);
+    }
+  }, [])
+
+  useEffect(() => {
+    refetch()
+  }, [refetch])
+
+  const addTask = useCallback(
+    async (dto: CreateTaskDto) => {
+      const res = await fetch(ENDPOINTS.add(), {
+        method: 'POST',
+        headers: {'Content-Type' : 'application/json'},
+        body: JSON.stringify(dto),
+      })
+      if(!res.ok) throw new Error(`POST /api/tasks failed (${res.status})`)
+        await refetch() // refetch after mutation
+    }, [refetch])
+
+    const completeTask = useCallback(
+    async (id: number) => {
+    const res = await fetch(ENDPOINTS.complete(id), {method: 'PATCH'})
+    if(!res.ok) throw new Error(`PATCH /api/tasks/${id}/complete failed (${res.status})`)
+    await refetch()
+    }, [refetch])
+
+    return {tasks, loading, error, refetch, addTask, completeTask}
+}
+
+
+
+
+export default function Home() {
+
+  const {tasks, loading, error, addTask, completeTask} = useTasks()
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [submitting, setSubmitting] = useState(false);
+  const [completingId, setCompletingId] = useState<number | null>(null)
+
+  async function onSubmit(e: React.FormEvent){
+    e.preventDefault()
+    if(!title.trim()) return 
+    setSubmitting(true)
+    try{
+      await addTask({title: title.trim(), description: description.trim() || undefined})
+      setTitle('')
+      setDescription('')
+    } catch(err) {
+      alert('Failed to add task. Try again')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function onComplete(id: number){
+    setCompletingId(id)
+    try{
+      await completeTask(id)
+    } catch (err){
+      alert('Failed to mark complete')
+    } finally {
+      setCompletingId(null)
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-50 p-6">
+      <div className="mx-auto max-w-6xl">
+        <h1 className="text-2xl font-semibold text-slate-900">Personal Task List</h1>
+
+        {/* Left and Right Half */}
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Left part: Form */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-lg font-medium text-slate-800">Add a task</h2>
+              <form onSubmit={onSubmit} className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="title">
+                    Title
+                  </label>
+                  <input
+                    id="title"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none ring-0 focus:border-slate-400"
+                    placeholder="Add task"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    maxLength={200}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="desc">
+                    Description <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <textarea 
+                    id="desc"
+                    className="min-h-[84px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-slate-400"
+                    placeholder="task description"
+                    value={description}
+                    onChange={e=> setDescription(e.target.value)}
+                    maxLength={2000}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled= {submitting || !title.trim()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />}
+                  Add Task
+                </button>
+              </form>
+            </section>
+
+          {/* Right part: List */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-medium text-slate-800">Your tasks</h2>
+            </div>
+
+            {loading && (
+              <div className="flex items-center gap-2 text-slate-600">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400/70 border-t-transparent">Loading...</span>
+              </div>
+            )}
+
+            {error && (
+              <div role="alert" className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <ul className="space-y-3">
+              {tasks.map(t => (
+                <li key={t.id} className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 p-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className={t.isComplete ? 'line-through text-slate-500' : 'text-slate-900'}>{t.title}</span>
+                      {t.isComplete && (
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Completed</span>
+                      )}
+                    </div>
+                    {t.description && (
+                      <p className="mt-1 text-sm text-slate-600 break-words">{t.description}</p>
+                    )}
+                    <time title={new Date(t.createdAt).toLocaleString()} className="mt-1 block text-xs text-slate-500">
+                      {new Date(t.createdAt).toLocaleDateString()}
+                    </time>
+                  </div>
+
+                  <div className="shrink-0">
+                    {!t.isComplete && (
+                      <button
+                        onClick={() => onComplete(t.id)}
+                        disabled = {completingId === t.id}
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {completingId === t.id ? 'Completing...' : 'Mark Complete'}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {!loading && tasks.length === 0 && !error && (
+              <p className="text-sm text-slate-600">No tasks yet. Add your first task from the form!</p>
+            )}
+          </section>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
