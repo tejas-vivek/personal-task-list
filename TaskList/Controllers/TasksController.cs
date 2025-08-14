@@ -48,6 +48,7 @@ namespace TaskList.Controllers
             };
 
             var created = await _repo.AddAsync(toAdd);
+            _logger.LogInformation("Task added: {TaskId} - {Title}", created.Id, created.Title);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
@@ -56,7 +57,15 @@ namespace TaskList.Controllers
         public async Task<IActionResult> MarkComplete(int id)
         {
             var ok = await _repo.MarkCompleteAsync(id);
-            return ok ? NoContent() : NoContent();
+
+            if (ok)
+            {
+                _logger.LogInformation("Task marked as complete: {TaskId}", id);
+            } else
+            {
+                _logger.LogWarning("Attempted to mark task not present as complete: {TaskId}", id);
+            }
+                return ok ? NoContent() : NoContent();
         }
     }
 }
