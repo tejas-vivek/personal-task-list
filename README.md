@@ -69,4 +69,17 @@ Use whatever port your backend prints at startup
 3. Open the app on http://localhost:3000
 
 ## What I'd Improve
+### Persist data with EF Core + SQLite DB
+Move from in-memory to persistent DB to store tasks.
+
+### TanStack Query for data-fetching and caching
+Replace the custom hook’s manual refetch with query/mutation hooks, cache invalidation, retries, and better loading states.
+
+### Add Edit endpoint
+Add a `PUT /api/tasks/{id}` endpoint to allow editing
+
+### Validation & Error
+Backend: FluentValidation or data annotations with consistent error payloads
+Frontend: inline errors on the form
+
 
