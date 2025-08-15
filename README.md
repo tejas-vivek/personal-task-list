@@ -1,10 +1,10 @@
-#Personal Task List
+# Personal Task List
 
 A full stack app with an ASP.NET Core Web API backend and a Next.js + Tailwind frontend. Add new tasks, list them and mark them complete. Frontend state lives in-memory (react) and the app uses a simple "refetch after mutation" pattern.
 
-##Stack
+## Stack
 
-###Backend
+### Backend
 
 ASP.NET Core Web API (C#)
 
@@ -14,7 +14,7 @@ DTOs for input validation (CreateTaskDto)
 
 CORS enabled for local dev
 
-###Frontend
+### Frontend
 
 Next.js (App Router) + React + TypeScript
 
@@ -22,15 +22,17 @@ Tailwind CSS for styling
 
 Custom useTasks() hook (fetch, add, complete, and refetch)
 
-##Prerequistes
+
+## Prerequistes
 
 .NET 8 SDK (or the SDK targeted by your project)
 
 Node.js 18+ and npm
 
-##Stack Used
 
-#Backend - Run
+## Stack Used
+
+# Backend - Run
 
 1. From `/TaskList` :
 
@@ -66,5 +68,5 @@ Use whatever port your backend prints at startup
 
 3. Open the app on http://localhost:3000
 
-##What I'd Improve
+## What I'd Improve
 
