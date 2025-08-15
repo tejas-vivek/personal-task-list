@@ -19,7 +19,8 @@ builder.Services.AddCors(opt =>
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>(); //Register the in-memory task repository
+//Register the in-memory task repository
+builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
