@@ -69,5 +69,13 @@ namespace TaskList.Controllers
             }
                 return ok ? NoContent() : NotFound();
         }
+
+        //DELETE a task
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var ok = await _repo.DeleteAsync(id);
+            return ok ? NoContent() : NotFound();
+        }
     }
 }

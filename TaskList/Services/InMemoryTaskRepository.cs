@@ -38,5 +38,16 @@ namespace TaskList.Services
                 return Task.FromResult(true);
             }
         }
+
+        public Task<bool> DeleteAsync(int id)
+        {
+            lock(_lock)
+            {
+                var idx = _items.FindIndex(t => t.Id == id);
+                if (idx < 0) return Task.FromResult(false);
+                _items.RemoveAt(idx);
+                return Task.FromResult(true);
+            }
+        }
     }
 }

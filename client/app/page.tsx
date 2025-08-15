@@ -22,6 +22,7 @@ const ENDPOINTS = {
   list: () => `${API_BASE}/api/tasks`,
   add: () => `${API_BASE}/api/tasks`,
   complete: (id: number) => `${API_BASE}/api/tasks/${id}/complete`,
+  delete: (id:number) => `${API_BASE}/api/tasks/${id}`
 }
 
 // sorting incomplete tasks on top
@@ -77,17 +78,25 @@ function useTasks(){
     await refetch()
     }, [refetch])
 
-    return {tasks, loading, error, refetch, addTask, completeTask}
+    const deleteTask = useCallback(
+      async(id: number) => {
+        const res = await fetch(ENDPOINTS.delete(id), {method: 'DELETE'})
+        if(!res.ok) throw new Error(`DELETE /api/tasks/${id} failed (${res.status})`)
+        await refetch()
+      }, [refetch])
+
+    return {tasks, loading, error, refetch, addTask, completeTask, deleteTask}
 }
 
 
 export default function Home() {
 
-  const {tasks, loading, error, addTask, completeTask} = useTasks()
+  const {tasks, loading, error, addTask, completeTask, deleteTask} = useTasks()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [submitting, setSubmitting] = useState(false);
   const [completingId, setCompletingId] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   async function onSubmit(e: React.FormEvent){
     e.preventDefault()
@@ -112,6 +121,18 @@ export default function Home() {
       alert('Failed to mark complete')
     } finally {
       setCompletingId(null)
+    }
+  }
+
+  async function onDelete(id: number){
+    if(!confirm('Delete this task?')) return
+    setDeletingId(id)
+    try{
+      await deleteTask(id)
+    } catch {
+      alert('Failed to delete. Try again')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -218,6 +239,16 @@ export default function Home() {
                       </button>
                     )}
                   </div>
+
+                  <div className="shrink-0">
+                    <button
+                    onClick={()=> onDelete(t.id)}
+                    disabled = {deletingId === t.id}
+                    className="ml-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {deletingId === t.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -233,3 +264,7 @@ export default function Home() {
     </main>
   );
 }
+function deleteTask(id: number) {
+  throw new Error("Function not implemented.");
+}
+
